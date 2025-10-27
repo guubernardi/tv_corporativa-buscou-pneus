@@ -1,0 +1,1230 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Painel TV - Buscou Pneus</title>
+  <meta name="description" content="Painel de TV corporativo com clima, horário e notícias para Buscou Pneus" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/hls.js@1.5.8/dist/hls.min.js"></script>
+  
+  <style>
+    /* Reset & Base */
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    :root {
+      /* Colors HSL */
+      --background: 222 47% 11%;
+      --foreground: 210 40% 98%;
+      --card: 222 45% 8%;
+      --card-foreground: 210 40% 98%;
+      --primary: 217 91% 60%;
+      --primary-foreground: 222 47% 11%;
+      --primary-glow: 217 91% 70%;
+      --secondary: 217 33% 17%;
+      --muted: 217 33% 17%;
+      --muted-foreground: 215 20% 65%;
+      --border: 217 33% 20%;
+      
+      /* Gradients */
+      --gradient-bg: linear-gradient(135deg, hsl(222 47% 11%) 0%, hsl(220 45% 18%) 100%);
+      --gradient-panel: linear-gradient(180deg, hsl(222 45% 8%) 0%, hsl(222 42% 6%) 100%);
+      --radial-blue: radial-gradient(1200px 800px at 15% 20%, hsla(220 70% 25% / 0.15) 0%, transparent 60%);
+      --radial-accent: radial-gradient(800px 600px at 85% 80%, hsla(217 91% 60% / 0.08) 0%, transparent 60%);
+      
+      /* Shadows */
+      --shadow-lg: 0 10px 40px hsla(222 47% 4% / 0.35);
+      --shadow-glow: 0 0 30px hsla(217 91% 60% / 0.15);
+      --shadow-glow-strong: 0 0 40px hsla(217 91% 60% / 0.25);
+    }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+    }
+
+    body {
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      color: hsl(var(--foreground));
+      background: var(--radial-blue), var(--radial-accent), var(--gradient-bg);
+      font-feature-settings: "ss01", "ss02", "cv01", "cv03";
+    }
+
+    /* Glass Panel Effect */
+    .glass-panel {
+      background: var(--gradient-panel);
+      border: 1px solid hsl(var(--border));
+      box-shadow: var(--shadow-lg), inset 0 1px 0 hsla(210 40% 98% / 0.05);
+      backdrop-filter: blur(12px);
+    }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: hsl(var(--muted) / 0.3);
+      border-radius: 3px;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: hsl(var(--primary) / 0.5);
+      border-radius: 3px;
+    }
+
+    /* Layout */
+    .screen {
+      width: 100vw;
+      height: 100vh;
+      padding: 24px;
+      display: grid;
+      grid-template-columns: 340px 1fr;
+      grid-template-rows: 1fr 86px;
+      gap: 20px;
+    }
+
+    /* Weather Panel */
+    .weather-panel {
+      border-radius: 1rem;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      animation: fadeInScale 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .weather-header {
+      padding: 16px 20px;
+      border-bottom: 1px solid hsl(var(--border) / 0.5);
+    }
+
+    .city {
+      font-size: 16px;
+      font-weight: 600;
+      letter-spacing: -0.01em;
+    }
+
+    .date-text {
+      font-size: 12px;
+      color: hsl(var(--muted-foreground));
+      margin-top: 4px;
+      text-transform: capitalize;
+    }
+
+    .weather-main {
+      padding: 20px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .weather-icon {
+      width: 80px;
+      height: 80px;
+      filter: drop-shadow(0 4px 8px rgba(0,0,0,0.3));
+    }
+
+    .temp-display {
+      font-size: 48px;
+      font-weight: 800;
+      line-height: 1;
+      letter-spacing: -0.02em;
+    }
+
+    .weather-desc {
+      font-size: 14px;
+      color: hsl(var(--muted-foreground));
+      margin-top: 4px;
+      text-transform: capitalize;
+    }
+
+    /* Metrics */
+    .metrics {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+      padding: 12px 20px;
+    }
+
+    .metric-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+    }
+
+    .metric-icon {
+      width: 14px;
+      height: 14px;
+      color: hsl(var(--primary) / 0.7);
+    }
+
+    .metric-label {
+      color: hsl(var(--muted-foreground));
+    }
+
+    .metric-value {
+      font-weight: 600;
+    }
+
+    /* Hourly & Daily */
+    .forecast-section {
+      padding: 16px 20px;
+      border-top: 1px solid hsl(var(--border) / 0.5);
+    }
+
+    .forecast-row {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      padding-bottom: 8px;
+    }
+
+    .forecast-row::-webkit-scrollbar {
+      height: 4px;
+    }
+
+    .forecast-card {
+      flex-shrink: 0;
+      min-width: 70px;
+      background: hsl(var(--card) / 0.5);
+      border: 1px solid hsl(var(--border) / 0.5);
+      border-radius: 12px;
+      padding: 10px 8px;
+      text-align: center;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .forecast-card:hover {
+      background: hsl(var(--card) / 0.7);
+      transform: translateY(-2px);
+    }
+
+    .forecast-time {
+      font-size: 10px;
+      color: hsl(var(--muted-foreground));
+      margin-bottom: 4px;
+    }
+
+    .forecast-icon {
+      width: 32px;
+      height: 32px;
+      margin: 0 auto;
+    }
+
+    .forecast-temp {
+      font-size: 14px;
+      font-weight: 600;
+      margin-top: 4px;
+    }
+
+    /* Brand */
+    .brand {
+      margin-top: auto;
+      padding: 16px 20px;
+      border-top: 1px solid hsl(var(--border) / 0.5);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .brand-logo {
+      height: 32px;
+      filter: drop-shadow(0 2px 6px rgba(0,0,0,0.3));
+    }
+
+    .brand-text {
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    .brand-update {
+      font-size: 10px;
+      color: hsl(var(--muted-foreground));
+    }
+
+    /* Main Display */
+    .main-display {
+      border-radius: 1rem;
+      position: relative;
+      overflow: hidden;
+      animation: fadeInScale 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .slides-container {
+      position: absolute;
+      inset: 0;
+      padding: 32px;
+    }
+
+    .slide {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      transform: translateY(16px) scale(0.95);
+      transition: all 0.7s cubic-bezier(0.4, 0, 0.2, 1);
+      pointer-events: none;
+    }
+
+    .slide.active {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+      pointer-events: auto;
+    }
+
+    .slide-content {
+      text-align: center;
+      max-width: 70%;
+      padding: 32px;
+    }
+
+    .hero-time {
+      font-size: clamp(64px, 12vw, 110px);
+      font-weight: 800;
+      line-height: 1;
+      letter-spacing: -0.04em;
+      font-variant-numeric: tabular-nums;
+      background: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(217 94% 68%) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 16px;
+    }
+
+    .hero-greeting {
+      font-size: 40px;
+      font-weight: 700;
+      margin-bottom: 12px;
+    }
+
+    .hero-subtitle {
+      font-size: 18px;
+      color: hsl(var(--muted-foreground));
+      text-transform: capitalize;
+    }
+
+    .hero-subtitle strong {
+      color: hsl(var(--foreground));
+    }
+
+    .hero-quote {
+      font-size: 20px;
+      color: hsl(213 94% 80%);
+      opacity: 0.95;
+      margin-top: 24px;
+      font-style: italic;
+      line-height: 1.6;
+    }
+
+    .slide-title-box {
+      display: inline-block;
+      padding: 16px 32px;
+      background: hsl(var(--primary) / 0.1);
+      border: 1px solid hsl(var(--primary) / 0.2);
+      border-radius: 16px;
+      margin-bottom: 24px;
+      box-shadow: var(--shadow-glow);
+    }
+
+    .slide-title {
+      font-size: clamp(48px, 6vw, 64px);
+      font-weight: 700;
+      background: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(217 94% 68%) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    /* Weekly Grid */
+    .weekly-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 16px;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .weekly-card {
+      height: 100%;
+      background: linear-gradient(180deg, hsl(var(--card)) 0%, hsl(222 42% 6%) 100%);
+      border: 1px solid hsl(var(--border));
+      border-radius: 16px;
+      padding: 16px;
+      text-align: center;
+      box-shadow: var(--shadow-lg);
+      display: grid;
+      grid-template-rows: 20px 16px 72px 36px 28px;
+      align-items: center;
+    }
+
+    .weekly-card .w-name {
+      font-size: 14px;
+      font-weight: 700;
+      text-transform: capitalize;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .weekly-card .w-date {
+      font-size: 11px;
+      color: hsl(var(--muted-foreground));
+    }
+
+    .weekly-card .w-icon {
+      width: 64px;
+      height: 64px;
+      margin: 0 auto;
+      filter: drop-shadow(0 4px 8px rgba(0,0,0,.3));
+    }
+
+    .weekly-card .w-desc {
+      font-size: 12px;
+      color: hsl(var(--muted-foreground));
+      text-transform: capitalize;
+    }
+
+    .weekly-card .w-temp {
+      font-size: 24px;
+      font-weight: 700;
+    }
+
+    .weekly-card .w-temp small {
+      font-size: 18px;
+      color: hsl(var(--muted-foreground));
+    }
+
+    /* Logo Hero */
+    .slide-content.logo-hero {
+      max-width: 100%;
+      padding: 0 4vw;
+    }
+
+    .logo-wrap {
+      position: relative;
+      display: inline-block;
+    }
+
+    .logo-hero .brand-logo-big {
+      width: min(70vw, 820px);
+      height: auto;
+      display: block;
+      filter: drop-shadow(0 18px 50px rgba(59,130,246,.25));
+    }
+
+    .logo-backlight {
+      position: absolute;
+      inset: -22% -14%;
+      background: radial-gradient(closest-side, hsla(217,91%,60%,.35), transparent 70%);
+      filter: blur(28px);
+      z-index: -1;
+      pointer-events: none;
+    }
+
+    .logo-shine {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(75deg, transparent, hsla(210,100%,98%,.18), transparent);
+      transform: skewX(-20deg);
+      animation: shine 6s linear infinite;
+      mix-blend-mode: screen;
+    }
+
+    @keyframes shine {
+      0% { transform: translateX(-140%) skewX(-20deg); }
+      100% { transform: translateX(140%) skewX(-20deg); }
+    }
+
+    .tagline {
+      margin-top: 24px;
+      font-size: clamp(18px, 2vw, 28px);
+      color: hsl(var(--muted-foreground));
+    }
+
+    /* Date Pill */
+    .date-pill {
+      position: absolute;
+      left: 24px;
+      bottom: 7px;
+      background: var(--gradient-panel);
+      border: 1px solid hsl(var(--primary) / 0.2);
+      border-radius: 16px;
+      padding: 16px;
+      text-align: center;
+      width: 64px;
+      box-shadow: var(--shadow-lg), var(--shadow-glow);
+    }
+
+    .pill-icon {
+      width: 24px;
+      height: 24px;
+      margin: 0 auto 8px;
+      color: hsl(var(--primary));
+    }
+
+    .pill-day {
+      font-size: 24px;
+      font-weight: 800;
+      line-height: 1;
+    }
+
+    .pill-month {
+      font-size: 10px;
+      color: hsl(var(--muted-foreground));
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-top: 4px;
+    }
+
+    /* News Ticker */
+    .news-ticker {
+      grid-column: span 2;
+      border-radius: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 0 20px;
+      overflow: hidden;
+      animation: slideUp 0.5s ease-out;
+    }
+
+    .ticker-tag {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: hsl(var(--primary));
+      color: hsl(var(--primary-foreground));
+      font-weight: 700;
+      font-size: 14px;
+      padding: 12px 16px;
+      border-radius: 8px;
+      box-shadow: var(--shadow-glow-strong);
+      flex-shrink: 0;
+    }
+
+    .ticker-icon {
+      width: 16px;
+      height: 16px;
+    }
+
+    .ticker-clock {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: hsl(var(--card));
+      border: 1px solid hsl(var(--border) / 0.5);
+      padding: 12px 16px;
+      border-radius: 8px;
+      font-variant-numeric: tabular-nums;
+      font-weight: 600;
+      flex-shrink: 0;
+    }
+
+    .ticker-clock-icon {
+      width: 16px;
+      height: 16px;
+      color: hsl(var(--primary));
+    }
+
+    .ticker-feed {
+      flex: 1;
+      overflow: hidden;
+      position: relative;
+      height: 100%;
+    }
+
+    .ticker-marquee {
+      position: absolute;
+      white-space: nowrap;
+      animation: marquee 45s linear infinite;
+      display: flex;
+      align-items: center;
+      height: 100%;
+    }
+
+    /* Radio Widget */
+    .radio-widget {
+      position: absolute;
+      right: 24px;
+      bottom: 24px;
+      z-index: 10;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: var(--gradient-panel);
+      border: 1px solid hsl(var(--primary) / .25);
+      border-radius: 14px;
+      padding: 10px 12px;
+      box-shadow: var(--shadow-lg), var(--shadow-glow);
+      user-select: none;
+    }
+
+    .radio-btn {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: hsl(var(--foreground));
+      font-weight: 600;
+      cursor: pointer;
+      background: none;
+      border: none;
+      font-family: inherit;
+      font-size: 14px;
+    }
+
+    .radio-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 9999px;
+      background: #ef4444;
+      box-shadow: 0 0 10px rgba(239,68,68,.6);
+    }
+
+    .radio-dot.playing {
+      background: #22c55e;
+      box-shadow: 0 0 10px rgba(34,197,94,.6);
+      animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    }
+
+    .radio-icon {
+      width: 18px;
+      height: 18px;
+      color: hsl(var(--primary));
+    }
+
+    .radio-volume {
+      appearance: none;
+      width: 0;
+      opacity: 0;
+      transition: all .25s ease;
+      height: 4px;
+      background: hsl(var(--primary) / .3);
+      border-radius: 9999px;
+    }
+
+    .radio-volume::-webkit-slider-thumb {
+      appearance: none;
+      width: 12px;
+      height: 12px;
+      border-radius: 9999px;
+      background: hsl(var(--primary));
+      box-shadow: 0 0 0 3px hsl(var(--primary) / .25);
+      cursor: pointer;
+    }
+
+    .radio-widget:hover .radio-volume {
+      width: 120px;
+      opacity: 1;
+    }
+
+    /* Animations */
+    @keyframes fadeInScale {
+      from {
+        opacity: 0;
+        transform: scale(0.95);
+      }
+      to {
+        opacity: 1;
+        transform: scale(1);
+      }
+    }
+
+    @keyframes slideUp {
+      from {
+        transform: translateY(20px);
+        opacity: 0;
+      }
+      to {
+        transform: translateY(0);
+        opacity: 1;
+      }
+    }
+
+    @keyframes marquee {
+      from {
+        transform: translateX(0);
+      }
+      to {
+        transform: translateX(-50%);
+      }
+    }
+
+    @keyframes pulse {
+      0%, 100% {
+        opacity: 1;
+      }
+      50% {
+        opacity: 0.5;
+      }
+    }
+
+    /* Loading */
+    .loading {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      color: hsl(var(--muted-foreground));
+      height: 100%;
+    }
+
+    .loading-icon {
+      width: 48px;
+      height: 48px;
+      animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    }
+  </style>
+</head>
+<body>
+  <div class="screen">
+    <!-- Weather Panel -->
+    <aside class="glass-panel weather-panel">
+      <div id="weatherContent" class="loading">
+        <svg class="loading-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z" />
+        </svg>
+        <p>Carregando clima...</p>
+      </div>
+    </aside>
+
+    <!-- Main Display -->
+    <main class="glass-panel main-display">
+      <div class="slides-container">
+        <!-- Slide 0: Logo Hero -->
+        <div class="slide active" data-slide="0">
+          <div class="slide-content logo-hero">
+            <div class="logo-wrap">
+              <div class="logo-backlight"></div>
+              <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 800 200'%3E%3Ctext x='50' y='120' font-family='Inter, sans-serif' font-size='80' font-weight='800' fill='%233b82f6'%3EBUSCOU PNEUS%3C/text%3E%3C/svg%3E" alt="Buscou Pneus" class="brand-logo-big">
+              <div class="logo-shine"></div>
+            </div>
+            <p class="tagline">Tudo para Pneumáticos</p>
+          </div>
+        </div>
+
+        <!-- Slide 1: Clock & Greeting -->
+        <div class="slide" data-slide="1">
+          <div class="slide-content">
+            <div class="hero-time" id="heroTime">--:--</div>
+            <h1 class="hero-greeting" id="heroGreeting">Bom dia!</h1>
+            <p class="hero-subtitle">
+              <strong>Buscou Pneus</strong> - Tudo para Pneumáticos · <span id="heroDate">—</span>
+            </p>
+            <p class="hero-quote" id="heroQuote">"Buscou Pneus — Tudo para Pneumáticos"</p>
+          </div>
+        </div>
+
+        <!-- Slide 2: Week Forecast -->
+        <div class="slide" data-slide="2">
+          <div class="slide-content" style="max-width: 90%;">
+            <div class="slide-title-box">
+              <h1 class="slide-title">Previsão da Semana</h1>
+            </div>
+            <div id="weekForecast" class="weekly-grid"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Date Pill -->
+      <div class="date-pill">
+        <svg class="pill-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <rect x="3" y="4" width="18" height="18" rx="2" ry="2" stroke-width="2"/>
+          <line x1="16" y1="2" x2="16" y2="6" stroke-width="2" stroke-linecap="round"/>
+          <line x1="8" y1="2" x2="8" y2="6" stroke-width="2" stroke-linecap="round"/>
+          <line x1="3" y1="10" x2="21" y2="10" stroke-width="2"/>
+        </svg>
+        <div class="pill-day" id="pillDay">—</div>
+        <div class="pill-month" id="pillMonth">—</div>
+      </div>
+
+      <!-- Radio Widget -->
+      <div class="radio-widget">
+        <button id="radioToggle" class="radio-btn" type="button" title="Reproduzir/Pausar rádio">
+          <svg class="radio-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path d="M9 19V6l12 6-12 6Z" stroke-width="2" stroke-linejoin="round"/>
+          </svg>
+          <span class="radio-dot" id="radioState"></span>
+          <span id="radioLabel">Tocar rádio</span>
+        </button>
+        <input id="radioVolume" class="radio-volume" type="range" min="0" max="1" step="0.01" value="0.25" aria-label="Volume da rádio">
+      </div>
+
+      <audio id="bgRadio" preload="metadata" autoplay muted playsinline crossorigin="anonymous"></audio>
+    </main>
+
+    <!-- News Ticker -->
+    <div class="glass-panel news-ticker">
+      <div class="ticker-tag">
+        <svg class="ticker-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <circle cx="12" cy="12" r="2" stroke-width="2"/>
+          <path stroke-width="2" stroke-linecap="round" d="M16.24 7.76a6 6 0 010 8.49m2.83-11.32a10 10 0 010 14.14m-11.31 0a10 10 0 010-14.14m2.83 2.83a6 6 0 010 8.49"/>
+        </svg>
+        <span>ÚLTIMAS</span>
+      </div>
+
+      <div class="ticker-clock">
+        <svg class="ticker-clock-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <circle cx="12" cy="12" r="10" stroke-width="2"/>
+          <path stroke-width="2" stroke-linecap="round" d="M12 6v6l4 2"/>
+        </svg>
+        <span id="tickerClock">--:--</span>
+      </div>
+
+      <div class="ticker-feed">
+        <div class="ticker-marquee" id="tickerMarquee">• Carregando notícias... •</div>
+      </div>
+    </div>
+  </div>
+
+
+  <script>
+    // ===== Configurações =====    
+    const OWM_KEY = "217e1c1ece2a777cd1c2eba244f63d3d";
+    const LAT = -23.6939;
+    const LON = -46.5646;
+    const REFRESH_MIN = 15;
+
+    const QUOTES = [
+      "Buscou Pneus — Tudo para Pneumáticos",
+      "Seu melhor de hoje puxa o seu melhor de amanhã.",
+      "Acredite que você pode, assim você já está no meio do caminho.",
+    ];
+
+    // ===== Utilities =====
+    const $ = (s) => document.querySelector(s); 
+    const cap = (s) => (s ? s.charAt(0).toUpperCase() + s.slice(1) : s);
+    const formatTime = (ts, tzOffset) => {
+      const d = new Date((ts + tzOffset) * 1000);
+      return `${String(d.getUTCHours()).padStart(2, "0")}:${String(d.getUTCMinutes()).padStart(2, "0")}`;
+    };
+
+    // ===== Clock & Date Updates =====
+    function updateClock() {
+      const now = new Date();
+      const hh = String(now.getHours()).padStart(2, "0");
+      const mm = String(now.getMinutes()).padStart(2, "0");
+      const dd = String(now.getDate()).padStart(2, "0");
+      const mon = now.toLocaleString("pt-BR", { month: "short" }).replace(".", "").toUpperCase();
+
+      // Ticker clock
+      $("#tickerClock").textContent = `${hh}:${mm}`;
+
+      // Date pill
+      $("#pillDay").textContent = dd;
+      $("#pillMonth").textContent = mon;
+
+      // Hero slide
+      const heroTime = $("#heroTime");
+      if (heroTime) heroTime.textContent = `${hh}:${mm}`;
+
+      const greeting = now.getHours() < 12 ? "Bom dia!" : now.getHours() < 18 ? "Boa tarde!" : "Boa noite!";
+      const heroGreeting = $("#heroGreeting");
+      if (heroGreeting) heroGreeting.textContent = greeting;
+
+      const fullDate = now.toLocaleDateString("pt-BR", { weekday: "long", day: "2-digit", month: "short" }).replace(".", "");
+      const heroDate = $("#heroDate");
+      if (heroDate) heroDate.textContent = cap(fullDate);
+
+      // Update quote hourly
+      if (now.getMinutes() === 0) {
+        const idx = (now.getDate() + now.getMonth() + now.getHours()) % QUOTES.length;
+        const heroQuote = $("#heroQuote");
+        if (heroQuote) heroQuote.textContent = `"${QUOTES[idx]}"`;
+      }
+    }
+
+    // ===== Slides =====
+    let currentSlide = 0;
+    const slides = document.querySelectorAll(".slide");
+    function nextSlide() {
+      slides[currentSlide].classList.remove("active");
+      currentSlide = (currentSlide + 1) % slides.length;
+      slides[currentSlide].classList.add("active");
+    }
+
+    // ===== Weather =====
+    async function fetchWeather() {
+        try {
+            $("#weatherContent").classList.add("loading");
+
+            // timestamp para “quebrar” qualquer cache intermediário
+            const bust = Date.now();
+            const url =
+            `https://api.openweathermap.org/data/3.0/onecall` +
+            `?lat=${LAT}&lon=${LON}` +
+            `&exclude=minutely,alerts` +
+            `&units=metric&lang=pt_br` +
+            `&appid=${OWM_KEY}` +
+            `&_=${bust}`;
+
+            const res = await fetch(url, { cache: "no-store" });
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            const data = await res.json();
+
+            renderWeather(data);
+
+        } catch (e) {
+            console.error("[clima]", e);
+            $("#weatherContent").innerHTML = `
+            <div class="loading">
+                <svg class="loading-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <p>Erro ao carregar clima</p>
+            </div>`;
+        } finally {
+            $("#weatherContent")?.classList.remove("loading");
+        }
+    }
+
+
+    function renderWeather(data) {
+      const now = new Date();
+      const updateTime = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
+      const weekday = now.toLocaleDateString("pt-BR", { weekday: "long" });
+      const date = now.toLocaleDateString("pt-BR", { day: "2-digit", month: "short" }).replace(".", "");
+
+      const tz = data.timezone_offset || 0;
+      const cur = data.current || {};
+      const iconUrl = `https://openweathermap.org/img/wn/${cur.weather?.[0]?.icon || "01d"}@2x.png`;
+
+      // Render week forecast for slide 2
+      renderWeekForecast(data.daily || [], tz);
+
+      // Hourly forecast
+      let hourlyHTML = "";
+      (data.hourly || []).slice(0, 8).forEach((h) => {
+        const time = formatTime(h.dt, tz);
+        const icon = `https://openweathermap.org/img/wn/${h.weather?.[0]?.icon || "01d"}@2x.png`;
+        hourlyHTML += `
+          <div class="forecast-card">
+            <div class="forecast-time">${time}</div>
+            <img src="${icon}" alt="" class="forecast-icon">
+            <div class="forecast-temp">${Math.round(h.temp)}°</div>
+          </div>
+        `;
+      });
+
+      // Daily forecast
+      let dailyHTML = "";
+      (data.daily || []).slice(0, 7).forEach((d) => {
+        const name = new Date((d.dt + tz) * 1000).toLocaleDateString("pt-BR", { weekday: "short" }).replace(".", "");
+        const icon = `https://openweathermap.org/img/wn/${d.weather?.[0]?.icon || "01d"}@2x.png`;
+        dailyHTML += `
+          <div class="forecast-card" style="min-width: 80px;">
+            <div class="forecast-time" style="text-transform: capitalize;">${cap(name)}</div>
+            <img src="${icon}" alt="" class="forecast-icon" style="width: 36px; height: 36px;">
+            <div class="forecast-temp" style="font-size: 12px;">
+              ${Math.round(d.temp.max)}° / ${Math.round(d.temp.min)}°
+            </div>
+          </div>
+        `;
+      });
+
+      $("#weatherContent").innerHTML = `
+        <div class="weather-header">
+          <h2 class="city">São Bernardo do Campo · SP</h2>
+          <p class="date-text">${cap(weekday)}, ${date}</p>
+        </div>
+
+        <div class="weather-main">
+          <img src="${iconUrl}" alt="clima" class="weather-icon">
+          <div>
+            <div class="temp-display">${Math.round(cur.temp || 0)}°</div>
+            <p class="weather-desc">${cur.weather?.[0]?.description || "—"}</p>
+          </div>
+        </div>
+
+        <div class="metrics">
+          <div class="metric-item">
+            <svg class="metric-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+            </svg>
+            <span class="metric-label">Vento:</span>
+            <span class="metric-value">${Math.round((cur.wind_speed || 0) * 3.6)} km/h</span>
+          </div>
+          <div class="metric-item">
+            <svg class="metric-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+            </svg>
+            <span class="metric-label">Umidade:</span>
+            <span class="metric-value">${cur.humidity ?? "--"}%</span>
+          </div>
+          <div class="metric-item">
+            <svg class="metric-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z" />
+            </svg>
+            <span class="metric-label">Sensação:</span>
+            <span class="metric-value">${Math.round(cur.feels_like || 0)}°C</span>
+          </div>
+          <div class="metric-item">
+            <svg class="metric-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <circle cx="12" cy="12" r="10" stroke-width="2"/>
+              <path stroke-width="2" d="M12 6v6l4 2"/>
+            </svg>
+            <span class="metric-label">Pressão:</span>
+            <span class="metric-value">${cur.pressure ?? "--"} hPa</span>
+          </div>
+          <div class="metric-item">
+            <svg class="metric-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+            </svg>
+            <span class="metric-label">Nascer:</span>
+            <span class="metric-value">${formatTime(cur.sunrise || 0, tz)}</span>
+          </div>
+          <div class="metric-item">
+            <svg class="metric-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+            </svg>
+            <span class="metric-label">Pôr:</span>
+            <span class="metric-value">${formatTime(cur.sunset || 0, tz)}</span>
+          </div>
+        </div>
+
+        <div class="forecast-section">
+          <div class="forecast-row">${hourlyHTML}</div>
+        </div>
+
+        <div class="forecast-section">
+          <div class="forecast-row">${dailyHTML}</div>
+        </div>
+
+        <div class="brand">
+          <svg width="32" height="32" viewBox="0 0 100 100">
+            <text x="5" y="55" font-family="Inter, sans-serif" font-size="25" font-weight="800" fill="#3b82f6">BP</text>
+          </svg>
+          <div>
+            <p class="brand-text">Buscou Pneus</p>
+            <p class="brand-update">Atualizado às ${updateTime}</p>
+          </div>
+        </div>
+      `;
+    }
+
+    // ===== Week Forecast for Slide =====
+    function renderWeekForecast(daily, tz) {
+      const weekForecast = $("#weekForecast");
+      if (!weekForecast) return;
+
+      weekForecast.innerHTML = (daily || []).slice(0, 7).map((d) => {
+        const dt = new Date((d.dt + tz) * 1000);
+        const name = dt.toLocaleDateString("pt-BR", { weekday: "long" });
+        const date = dt.toLocaleDateString("pt-BR", { day: "2-digit", month: "short" }).replace(".", "");
+        const icon = `https://openweathermap.org/img/wn/${d.weather?.[0]?.icon || "01d"}@4x.png`;
+        const desc = cap(d.weather?.[0]?.description || "—");
+
+        return `
+          <div class="weekly-card">
+            <div class="w-name">${cap(name)}</div>
+            <div class="w-date">${date}</div>
+            <img class="w-icon" src="${icon}" alt="${desc}">
+            <div class="w-desc">${desc}</div>
+            <div class="w-temp">${Math.round(d.temp.max)}° <small>/ ${Math.round(d.temp.min)}°</small></div>
+          </div>
+        `;
+      }).join("");
+    }
+
+    // ===== News =====
+    async function fetchNews() {
+      try {
+        const url = "https://api.allorigins.win/raw?url=" + encodeURIComponent("https://news.google.com/rss?hl=pt-BR&gl=BR&ceid=BR:pt");
+        const res = await fetch(url);
+        if (!res.ok) throw new Error(String(res.status));
+        const xml = new DOMParser().parseFromString(await res.text(), "text/xml");
+        const titles = [...xml.querySelectorAll("item")]
+          .slice(0, 12)
+          .map((i) => i.querySelector("title")?.textContent?.trim())
+          .filter(Boolean);
+        if (titles.length) {
+          const text = " • " + titles.join(" • ") + " • ";
+          $("#tickerMarquee").textContent = text + text;
+        }
+      } catch (e) {
+        console.warn("[news]", e);
+      }
+    }
+
+    // ===== Radio (Mix FM 106.3) - HLS + fallback =====
+    function initRadio() {
+        // 1) Tente HLS (m3u8); 2) caia para MP3/AAC progressivo
+        const HLS_STREAMS = [
+            "https://playerservices.streamtheworld.com/api/livestream-redirect/MIXFMSP_AAC.m3u8?dist=buscou",
+            "https://playerservices.streamtheworld.com/api/livestream-redirect/MIXFMSP.m3u8?dist=buscou"
+        ];
+        const PROG_STREAMS = [
+            "https://playerservices.streamtheworld.com/api/livestream-redirect/MIXFMSP.mp3?dist=buscou",
+            "https://playerservices.streamtheworld.com/api/livestream-redirect/MIXFMSP_SC?dist=buscou",
+            "https://playerservices.streamtheworld.com/api/livestream-redirect/MIXFMSP_AAC.aac?dist=buscou",
+            "https://playerservices.streamtheworld.com/api/livestream-redirect/MIXFMAAC_SC?dist=buscou"
+        ];
+
+        const audio = document.getElementById("bgRadio");
+        const btn   = document.getElementById("radioToggle");
+        const label = document.getElementById("radioLabel");
+        const dot   = document.getElementById("radioState");
+        const volumeSlider = document.getElementById("radioVolume");
+
+        audio.volume = parseFloat(volumeSlider.value || "0.25");
+        audio.muted  = true; // autoplay permitido
+        audio.loop   = true;
+
+        let hls = null;
+        let hlsIndex = 0;
+        let progIndex = 0;
+        let usingHls = false;
+
+        function setLabelPlaying() {
+            label.textContent = audio.muted ? "Mix FM (mudo)" : "Mix FM 106.3";
+            dot.classList.add("playing");
+        }
+        function setLabelStopped() {
+            label.textContent = "Tocar rádio";
+            dot.classList.remove("playing");
+        }
+
+        function playNative(url) {
+            audio.src = url + (url.includes("?") ? "&" : "?") + "_ts=" + Date.now();
+            audio.play().catch(() => {});
+        }
+
+        function tryProgNext() {
+            if (progIndex >= PROG_STREAMS.length) {
+            label.textContent = "Indisponível";
+            btn.disabled = true;
+            return;
+            }
+            usingHls = false;
+            playNative(PROG_STREAMS[progIndex++]);
+        }
+
+        function tryHlsNext() {
+            if (!window.Hls || !window.Hls.isSupported() || hlsIndex >= HLS_STREAMS.length) {
+            // sem HLS ou esgotou: cai para MP3/AAC
+            tryProgNext();
+            return;
+            }
+            usingHls = true;
+
+            if (hls) {
+            hls.destroy();
+            hls = null;
+            }
+
+            hls = new Hls({
+            enableWorker: true,
+            lowLatencyMode: true,
+            backBufferLength: 90
+            });
+            hls.attachMedia(audio);
+            const url = HLS_STREAMS[hlsIndex++] + "&_ts=" + Date.now();
+
+            hls.on(Hls.Events.MEDIA_ATTACHED, () => {
+            hls.loadSource(url);
+            });
+
+            hls.on(Hls.Events.MANIFEST_PARSED, () => {
+            audio.play().catch(() => {});
+            });
+
+            // Erros de rede/parse → tenta próximo HLS; se acabar, cai para MP3
+            hls.on(Hls.Events.ERROR, (ev, data) => {
+            if (data.fatal) {
+                tryHlsNext();
+            }
+            });
+    }
+
+    // Eventos do <audio>
+    audio.addEventListener("playing", setLabelPlaying);
+    audio.addEventListener("pause", setLabelStopped);
+
+    // Se der erro no <audio>, tenta próximo (HLS → MP3/AAC)
+    audio.addEventListener("error", () => {
+        if (usingHls) {
+        tryHlsNext();
+        } else {
+        tryProgNext();
+        }
+    });
+    ["stalled","suspend","waiting"].forEach(ev => {
+        audio.addEventListener(ev, () => {
+        // rebuffer rápido mantendo o mesmo src
+        const cur = audio.src;
+        if (cur) {
+            audio.src = "";
+            audio.src = cur;
+            audio.play().catch(() => {});
+        }
+        });
+    });
+
+    // Botão play/pause
+    btn.addEventListener("click", () => {
+        if (!audio.src && !usingHls && !hls) {
+        tryHlsNext(); // começa pela lista HLS
+        return;
+        }
+        if (audio.paused) audio.play().catch(() => {});
+        else audio.pause();
+    });
+
+    // Volume (desmuta ao mexer)
+    volumeSlider.addEventListener("input", (e) => {
+        audio.volume = parseFloat(e.target.value);
+        if (audio.muted) {
+        audio.muted = false;
+        setLabelPlaying();
+        }
+    });
+
+    // Desmutar no primeiro gesto do usuário
+    const unlock = () => {
+        if (audio.muted) {
+        audio.muted = false;
+        setLabelPlaying();
+        }
+        window.removeEventListener("pointerdown", unlock);
+        window.removeEventListener("keydown", unlock);
+        window.removeEventListener("touchstart", unlock);
+    };
+    window.addEventListener("pointerdown", unlock, { once: true });
+    window.addEventListener("keydown",    unlock, { once: true });
+    window.addEventListener("touchstart", unlock, { once: true });
+
+    // Autoplay mutado (começa tentando HLS)
+    setTimeout(() => tryHlsNext(), 600);
+
+    // Retomar quando voltar o foco da aba
+    document.addEventListener("visibilitychange", () => {
+        if (!document.hidden && audio.src && audio.paused) {
+        audio.play().catch(() => {});
+        }
+    });
+    }
+    // ===== Initialize =====
+    updateClock();
+    setInterval(updateClock, 1000);
+
+    fetchWeather();
+    setInterval(fetchWeather, REFRESH_MIN * 60 * 1000);
+
+    fetchNews();
+    setInterval(fetchNews, 30 * 60 * 1000);
+
+    setInterval(nextSlide, 8000);
+
+    initRadio();
+  </script>
+</body>
+</html>
